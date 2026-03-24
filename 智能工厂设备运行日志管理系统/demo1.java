@@ -1,5 +1,5 @@
 package 智能工厂设备运行日志管理系统;
-
+import java.io.*;
 import javax.naming.InsufficientResourcesException;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -97,15 +97,23 @@ public class demo1 {
      *
      * @param temperature 温度值
      */
+    /**
+     * 记录设备数据到日志（内存 + 文件）
+     */
     public static void recordData(int temperature) {
         String currentTime = getCurrentTime();
         String logEntry = "[" + currentTime + "] 设备温度：" + temperature + "°C";
-        if (logList.size() >= MAX_LOG_SIZE) {
-            logList.remove(0); // 删除最旧的日志
-            System.out.println("已删除最旧的日志：" + logList.get(0));
-        }
+
+        // 写入内存
         logList.add(logEntry);
         System.out.println("✓ 数据已记录：" + temperature + "°C");
+
+        // 写入文件（工业真实性：日志持久化）
+        try (FileWriter fw = new FileWriter("factory_log.txt", true)) {
+            fw.write(logEntry + "\n");
+        } catch (IOException e) {
+            System.out.println("警告：日志写入文件失败");
+        }
     }
 
     /**
@@ -118,8 +126,16 @@ public class demo1 {
             String alarmTime = getCurrentTime();
             String alarmLog = "[***ALARM***] " + alarmTime + " 温度超标！当前：" +
                     temperature + "°C > 阈值：" + TEMPERATURE_THRESHOLD + "°C";
+
             logList.add(alarmLog);
             System.out.println("⚠️  警告：温度超标！" + temperature + "°C");
+
+            // 写入文件
+            try (FileWriter fw = new FileWriter("factory_log.txt", true)) {
+                fw.write(alarmLog + "\n");
+            } catch (IOException e) {
+                System.out.println("警告：报警日志写入文件失败");
+            }
         }
     }
 
